@@ -51,5 +51,8 @@ All code must pass SonarQube quality gate before merging. See `.claude/rules/tes
 
 - Every pipeline interface implementation must be a Spring `@Component` or `@Bean`
 - Component IDs for testability: `upload`, `processing-progress`, `markdown-editor`, `markdown-preview`, `download-button`
-- Test fixtures in `src/test/resources/fixtures/{easy,medium,hard}/`
+- Test fixtures in `src/test/resources/fixtures/{easy,medium,hard}/` (each has `.png` + expected `.md`)
 - BDD specs in `src/test/resources/specs/`
+- Output normalization: always `#` headings (not underline), always fenced code blocks (not indented)
+- Links: `[text]()` when URL unknown, `[url](url)` when link text is itself a URL
+- Images: `[IMGn]()` placeholders with sequential numbering

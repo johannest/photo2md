@@ -17,6 +17,8 @@ Official releases of this add-on are available at
 
 ## Building TestBench
 
-    git clone https://github.com/vaadin/testbench.git
-    cd testbench
-    mvn clean install
+```
+git clone https://github.com/vaadin/testbench.git
+cd testbench
+mvn clean install
+```

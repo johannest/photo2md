@@ -1,5 +1,4 @@
-Vaadin Flow
-======
+# Vaadin Flow
 *[Vaadin Flow]() is the Java framework of Vaadin Platform for building modern websites that look great, perform well and make you and your users happy.*
 
 **For instructions about developing web applications with Vaadin Flow**, please refer to [the documentation]().

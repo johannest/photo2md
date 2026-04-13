@@ -24,8 +24,8 @@ photo2md/
 │   ├── AppShell.java                          # @PWA
 │   ├── pipeline/
 │   │   ├── domain/                            # Sealed interface + records
-│   │   │   ├── DocumentElement.java           # sealed: Title, Paragraph, ListBlock, Table, ImageRegion
-│   │   │   ├── BoundingBox.java, Title.java, Paragraph.java, ListBlock.java, Table.java, ImageRegion.java
+│   │   │   ├── DocumentElement.java           # sealed: Title, Paragraph, ListBlock, Table, CodeBlock, ImageRegion, Link
+│   │   │   ├── BoundingBox.java, Title.java, Paragraph.java, ListBlock.java, Table.java, CodeBlock.java, ImageRegion.java, Link.java
 │   │   │   ├── DocumentLayout.java
 │   │   │   └── ProcessingResult.java
 │   │   ├── ImagePreprocessor.java             # Interface
@@ -98,7 +98,32 @@ Pipeline orchestration: `raw image → preprocess → segment → OCR each regio
 
 ## Domain Model
 
-- `DocumentElement` (sealed interface): `Title(level, text, bounds)`, `Paragraph(text, bounds)`, `ListBlock(type, items, bounds)`, `Table(headers, rows, bounds)`, `ImageRegion(imageData, altText, bounds)`
+`DocumentElement` (sealed interface) with the following record permits:
+
+| Record | Fields | Notes |
+|--------|--------|-------|
+| `Title` | `level`, `text`, `bounds` | Always output as `#` style (normalize underline `======` to `#`) |
+| `Paragraph` | `text`, `bounds` | Text may contain inline styles (see below) |
+| `ListBlock` | `type`, `items`, `bounds` | `type`: ORDERED / UNORDERED. Items may themselves contain nested `ListBlock`s |
+| `Table` | `headers`, `rows`, `bounds` | Cell text may contain inline styles and links |
+| `CodeBlock` | `language`, `code`, `bounds` | Always output as fenced (` ``` `). `language` is optional (nullable/empty) |
+| `ImageRegion` | `imageData`, `altText`, `bounds` | Output as `[IMGn]()` placeholder with sequential numbering |
+| `Link` | `text`, `url`, `bounds` | If link text looks like a URL → keep it: `[url](url)`. Otherwise → `[text]()` |
+
+### Inline Text Styles
+
+`Paragraph`, `ListBlock` items, and `Table` cells can contain inline formatting. Represented via a `StyledText` value object or Markdown-in-string convention:
+
+| Style | Markdown Output | Example |
+|-------|----------------|---------|
+| **Bold** | `**text**` | `**For instructions about...**` |
+| *Italic* | `*text*` | `*Vaadin Flow is the Java framework...*` |
+| `Monospace` | `` `text` `` | `` `index.ts` `` |
+| Link | `[text]()` or `[url](url)` | `[the documentation]()` |
+
+### Supporting Records
+
+- `BoundingBox(x, y, width, height)` — position in original image
 - `DocumentLayout(List<DocumentElement> elements)` — ordered top-to-bottom
 - `ProcessingResult(markdown, layout, processingTime, metadata)`
 
@@ -144,8 +169,16 @@ Markdown files in `src/test/resources/specs/` using GIVEN/WHEN/THEN format. Huma
 - **Deliverable**: `mvn verify` passes, app runs, Playwright test green
 
 ### Phase 2: Domain Model + MarkdownGenerator (pure TDD)
-- Define all domain records (sealed interface)
-- Write `MarkdownGeneratorTest` first (all element types + mixed doc)
+- Define all domain records (sealed interface with 7 permits)
+- Write `MarkdownGeneratorTest` first — cover every element type:
+  - Title levels 1-6 (always `#` style output)
+  - Paragraph with plain text, bold, italic, monospace, links
+  - Ordered and unordered lists, including nested lists
+  - Tables with header row, including inline links/styles in cells
+  - Fenced code blocks with and without language tag
+  - Image placeholders (`[IMGn]()` with sequential numbering)
+  - Links: `[text]()` vs `[url](url)` rule
+  - Mixed document ordering (multi-element layout)
 - Implement `DefaultMarkdownGenerator` to pass all tests
 - **Deliverable**: Full MarkdownGenerator coverage, `mvn test` green
 
@@ -182,6 +215,28 @@ Markdown files in `src/test/resources/specs/` using GIVEN/WHEN/THEN format. Huma
 - Improve preprocessing (noise removal, shadow elimination)
 - Refine segmentation heuristics
 - **Deliverable**: Reasonable results for real photos
+
+## Output Normalization Rules
+
+These rules ensure consistent Markdown output regardless of input style:
+
+1. **Headings**: Always `#` prefix style. Never underline (`======`) style.
+2. **Code blocks**: Always fenced (` ``` `). Indented code blocks in input → fenced in output. Add language tag when detectable.
+3. **Links**: If link text looks like a URL → `[url](url)`. Otherwise → `[text]()` (empty URL, since we can't resolve URLs from a photo).
+4. **Images**: Output `[IMGn]()` with sequential numbering (IMG1, IMG2, ...).
+5. **Lists**: Preserve ordered vs unordered type. Preserve nesting depth.
+6. **Inline styles**: Preserve bold (`**`), italic (`*`), monospace (`` ` ``).
+
+## Reference Fixtures
+
+Four sample fixture pairs provided in `src/test/resources/fixtures/easy/`:
+
+| Fixture | Key elements tested |
+|---------|-------------------|
+| `titles-list` | H1 titles, paragraphs, ordered lists, unordered lists, nested mixed lists |
+| `code-blocks-1` | Paragraphs, H2 title, inline code (monospace), fenced code blocks with language tags |
+| `title-links-table` | H1 title, bold, italic, links (empty + URL-preserving), tables with inline links |
+| `img-titles-paragraphs-link-code` | Image placeholders, H1/H2 titles, paragraphs, links with URLs, code blocks |
 
 ## Verification
 
