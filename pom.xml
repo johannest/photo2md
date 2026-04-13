@@ -87,14 +87,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- OCR: Tesseract via tess4j -->
-        <dependency>
-            <groupId>net.sourceforge.tess4j</groupId>
-            <artifactId>tess4j</artifactId>
-            <version>5.13.0</version>
-        </dependency>
-
-        <!-- Image processing: OpenCV via JavaCV (platform-specific natives) -->
+        <!-- Image processing + OCR: OpenCV + Tesseract via JavaCV (includes native binaries) -->
         <dependency>
             <groupId>org.bytedeco</groupId>
             <artifactId>javacv-platform</artifactId>
