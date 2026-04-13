@@ -13,12 +13,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
+import java.nio.file.Path;
+
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 /**
  * Playwright E2E tests for the UploadView.
  * <p>
- * Verifies the upload page loads correctly and key UI components are present.
+ * Tests the full user flow: page load, upload, processing, editor, preview, download.
  * See spec: src/test/resources/specs/06-ui-upload-and-preview.md
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -62,29 +64,81 @@ class UploadViewPlaywrightIT {
         }
     }
 
+    private void navigateToApp() {
+        page.navigate("http://localhost:" + port + "/");
+        page.waitForSelector("#heading");
+    }
+
     @Test
     void pageLoadsWithHeading() {
-        page.navigate("http://localhost:" + port + "/");
-        // Wait for Vaadin to finish loading
-        page.waitForSelector("#heading");
-
+        navigateToApp();
         assertThat(page.locator("#heading")).hasText("Photo to Markdown");
     }
 
     @Test
     void pageLoadsWithUploadComponent() {
-        page.navigate("http://localhost:" + port + "/");
+        navigateToApp();
         page.waitForSelector("#upload");
-
         assertThat(page.locator("#upload")).isVisible();
     }
 
     @Test
     void uploadComponentAcceptsImages() {
-        page.navigate("http://localhost:" + port + "/");
+        navigateToApp();
         page.waitForSelector("vaadin-upload");
-
-        // Vaadin Upload renders as a vaadin-upload web component
         assertThat(page.locator("vaadin-upload")).isVisible();
+    }
+
+    @Test
+    void editorAndPreviewHiddenBeforeUpload() {
+        navigateToApp();
+        // SplitLayout containing editor+preview should not be visible initially
+        assertThat(page.locator("#markdown-editor")).not().isVisible();
+        assertThat(page.locator("#markdown-preview")).not().isVisible();
+    }
+
+    @Test
+    void downloadButtonHiddenBeforeUpload() {
+        navigateToApp();
+        assertThat(page.locator("#download-button")).not().isVisible();
+    }
+
+    @Test
+    void uploadImageShowsEditorAndPreview() {
+        navigateToApp();
+
+        // Upload a fixture image
+        Path fixturePath = Path.of("src/test/resources/fixtures/easy/titles-list.png");
+        page.locator("vaadin-upload input[type='file']")
+                .setInputFiles(fixturePath);
+
+        // Wait for processing to complete — editor becomes visible
+        page.locator("#markdown-editor").waitFor(
+                new com.microsoft.playwright.Locator.WaitForOptions()
+                        .setTimeout(60000));
+
+        assertThat(page.locator("#markdown-editor")).isVisible();
+        assertThat(page.locator("#markdown-preview")).isVisible();
+        assertThat(page.locator("#download-button")).isVisible();
+    }
+
+    @Test
+    void uploadedImageProducesMarkdownContent() {
+        navigateToApp();
+
+        Path fixturePath = Path.of("src/test/resources/fixtures/easy/titles-list.png");
+        page.locator("vaadin-upload input[type='file']")
+                .setInputFiles(fixturePath);
+
+        // Wait for editor to appear with content
+        page.locator("#markdown-editor").waitFor(
+                new com.microsoft.playwright.Locator.WaitForOptions()
+                        .setTimeout(60000));
+
+        // The textarea should have some markdown content
+        String editorContent = page.locator("#markdown-editor textarea")
+                .inputValue();
+        assertThat(page.locator("#markdown-editor textarea"))
+                .not().hasValue("");
     }
 }
