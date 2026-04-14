@@ -61,5 +61,5 @@ Key properties (set in `application.properties` or via environment variables):
 | `photo2md.ocr.engine` | `tesseract` | OCR engine for staged mode |
 | `photo2md.claude.api-key` | — | Anthropic API key (required for `claude` mode) |
 | `photo2md.claude.model` | `claude-sonnet-4-20250514` | Claude model to use |
-| `photo2md.local-llm.base-url` | `http://localhost:1234` | Local LLM server URL |
+| `photo2md.local-llm.base-url` | `http://127.0.0.1:1234` | Local LLM server URL (use IP, not localhost) |
 | `photo2md.local-llm.model` | `qwen2.5-vl` | Local vision model name |

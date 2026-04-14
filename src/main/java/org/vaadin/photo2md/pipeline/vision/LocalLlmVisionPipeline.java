@@ -50,7 +50,7 @@ public class LocalLlmVisionPipeline extends VisionLlmPipeline {
                 )
         );
 
-        log.debug("Calling local LLM API with model={}, maxTokens={}", model, maxTokens);
+        log.info("Calling local LLM API with model={}, maxTokens={}", model, maxTokens);
 
         try {
             @SuppressWarnings("unchecked")
@@ -60,6 +60,7 @@ public class LocalLlmVisionPipeline extends VisionLlmPipeline {
                     .retrieve()
                     .body(Map.class);
 
+            log.info("Received response from local LLM API");
             return extractMarkdown(response);
         } catch (VisionApiException e) {
             throw e;
