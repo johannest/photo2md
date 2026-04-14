@@ -1,4 +1,4 @@
-package org.vaadin.photo2md.pipeline;
+package org.vaadin.photo2md.pipeline.staged;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.vaadin.photo2md.pipeline.*;
 import org.vaadin.photo2md.pipeline.domain.*;
 
 import java.util.List;
@@ -18,11 +19,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for the {@link DocumentPipeline} orchestrator.
+ * Unit tests for the {@link StagedDocumentPipeline} orchestrator.
  * All pipeline stages are mocked — this tests orchestration logic only.
  */
 @ExtendWith(MockitoExtension.class)
-class DocumentPipelineTest {
+class StagedDocumentPipelineTest {
 
     @Mock
     private ImagePreprocessor preprocessor;
@@ -39,11 +40,11 @@ class DocumentPipelineTest {
     @Mock
     private ImageCropper imageCropper;
 
-    private DocumentPipeline pipeline;
+    private StagedDocumentPipeline pipeline;
 
     @BeforeEach
     void setUp() {
-        pipeline = new DocumentPipeline(preprocessor, segmenter, ocrEngine,
+        pipeline = new StagedDocumentPipeline(preprocessor, segmenter, ocrEngine,
                 markdownGenerator, imageCropper);
     }
 
@@ -218,7 +219,6 @@ class DocumentPipelineTest {
             when(segmenter.segment(preprocessed)).thenReturn(layout);
             when(imageCropper.crop(eq(preprocessed), any())).thenReturn(croppedRegion);
             when(ocrEngine.recognize(croppedRegion)).thenReturn("Recognized text");
-            // Capture the layout passed to the generator
             when(markdownGenerator.generate(any())).thenAnswer(invocation -> {
                 DocumentLayout passedLayout = invocation.getArgument(0);
                 var elements = passedLayout.elements();
@@ -230,7 +230,6 @@ class DocumentPipelineTest {
 
             pipeline.process(rawImage);
 
-            // The assertion is inside the mock answer above
             verify(markdownGenerator).generate(any());
         }
     }

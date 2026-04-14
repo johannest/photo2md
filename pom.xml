@@ -128,12 +128,12 @@
                 </executions>
             </plugin>
 
-            <!-- Unit tests (Surefire) — excludes Playwright and HuggingFace tags -->
+            <!-- Unit tests (Surefire) — excludes Playwright, HuggingFace, and LLM backend tags -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <excludedGroups>playwright,huggingface</excludedGroups>
+                    <excludedGroups>playwright,huggingface,claude,local-llm</excludedGroups>
                 </configuration>
             </plugin>
 
